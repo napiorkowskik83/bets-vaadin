@@ -23,31 +23,39 @@ public class BetsFacade {
         this.leaguesMap = leaguesMap;
     }
 
-//    public List<BetProspectDto> getCurrentOddsProspectFrom(String sportKey) {
-//        return betsClient.getCurrentBetProspectsFrom(sportKey);
-//    }
-
-    public SignUpFeedback signUserUp(UserDto user){
+    public SignUpFeedback signUserUp(UserDto user) {
         return betsClient.signUserUp(user);
     }
 
-    public LogInFeedback logUserIn(String login, String password){
+    public LogInFeedback logUserIn(String login, String password) {
         return betsClient.logUserIn(login, password);
     }
 
-    public void updateUser(UserDto user){
+    public void updateUser(UserDto user) {
         betsClient.updateUser(user);
     }
 
-    public UserDto getUserById(Long userId){
+    public UserDto getUserById(Long userId) {
         return betsClient.getUserById(userId);
     }
 
-    public List<BetProspectDto> getBetProspects(Set<String> leagues){
+    public List<BetProspectDto> getBetProspects(Set<String> leagues) {
         List<BetProspectDto> betProspectDtoList = new ArrayList<>();
-        for(String league: leagues){
+        for (String league : leagues) {
             betProspectDtoList.addAll(betsClient.getCurrentBetProspectsFrom(leaguesMap.getLeagues().get(league)));
         }
         return betProspectDtoList;
+    }
+
+    public void addBet(BetDto bet) {
+        betsClient.addBet(bet);
+    }
+
+    public List<BetDto> getAllBets() {
+        return betsClient.getAllBets();
+    }
+
+    public List<BetDto> getBetsOfUser(Long userId, Boolean onlyPending) {
+        return betsClient.getBetsOfUser(userId, onlyPending);
     }
 }

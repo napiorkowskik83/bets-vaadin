@@ -1,6 +1,9 @@
-package com.betsvaadin.domain;
+package com.betsvaadin.views.mainviewlayouts;
 
-import com.betsvaadin.MainView;
+import com.betsvaadin.domain.BetDto;
+import com.betsvaadin.domain.UserDto;
+import com.betsvaadin.domain.Winner;
+import com.betsvaadin.views.MainView;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.icon.Icon;
@@ -9,17 +12,19 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.BigDecimalField;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
 
 public class BetLayout extends VerticalLayout {
+
+    private final ChronoUnit seconds = ChronoUnit.SECONDS;
 
     public BetLayout(MainView mainView, BetDto betDto) {
         Label hTeam = new Label(betDto.getBetProspect().getTeams().get(0));
@@ -53,7 +58,6 @@ public class BetLayout extends VerticalLayout {
             odd = betDto.getBetProspect().getH2h().get(2);
         }
 
-
         HorizontalLayout stakeLine = new HorizontalLayout();
         BigDecimalField stakeField = new BigDecimalField("Stake");
         stakeField.addThemeVariants(TextFieldVariant.LUMO_ALIGN_RIGHT);
@@ -73,10 +77,9 @@ public class BetLayout extends VerticalLayout {
         possibleWinField.setValue(BigDecimal.ZERO);
 
         stakeField.addValueChangeListener(event -> {
-            if(stakeField.getValue() != null){
+            if (stakeField.getValue() != null) {
                 possibleWinField.setValue(odd.multiply(stakeField.getValue()).setScale(2, RoundingMode.HALF_UP));
             }
-
         });
 
         stakeLine.add(stakeField, oddField, possibleWinField);
@@ -85,21 +88,25 @@ public class BetLayout extends VerticalLayout {
 
         Button submit = new Button("Submit");
         submit.addClickListener(event1 -> {
-            if (stakeField.getValue().compareTo(BigDecimal.ZERO) <= 0
+            if (seconds.between(betDto.getBetProspect().getCommence_time(), ZonedDateTime.now()) > 0) {
+                Notification.show("Too late, you can not make a bet after match start!\n" +
+                        "Bet has been canceled");
+                mainView.getBetsLayout().remove(this);
+                mainView.updateBetProspectsLayout();
+            } else if (stakeField.getValue() == null || stakeField.getValue().compareTo(BigDecimal.ZERO) <= 0
                     || stakeField.getValue().compareTo(mainView.getUser().getBalance()) > 0) {
                 Notification.show("Please put stake greater than 0 but not greater than your current balance");
             } else {
                 betDto.setCreated(LocalDateTime.now());
                 betDto.setStake(stakeField.getValue().setScale(2, RoundingMode.HALF_UP));
-                UserDto user = mainView.getUser();
+                UserDto user = mainView.getBetsFacade().getUserById(mainView.getUser().getId());
                 BigDecimal newBalance = user.getBalance().subtract(stakeField.getValue().setScale(2, RoundingMode.HALF_UP));
                 user.setBalance(newBalance);
                 mainView.setUser(user);
                 mainView.updateUserBar();
                 betDto.setUser(user);
-                //mainView.getBetsFacade().updateUser(user);
-                //mainView.getBetsFacade().
-                Notification.show("Bet was successfully registered");
+                mainView.getBetsFacade().addBet(betDto);
+                Notification.show("Bet was successfully registered, you can see it in My Bets");
                 mainView.getBetsLayout().remove(this);
             }
         });
@@ -108,10 +115,10 @@ public class BetLayout extends VerticalLayout {
         cancel.addClickListener(event2 -> {
             mainView.getBetsLayout().remove(this);
         });
-        buttonLine.add(submit,cancel);
+        buttonLine.add(submit, cancel);
 
         add(teamsLine, startAndBetOnLine, stakeLine, buttonLine);
         getStyle().set("border-style", "solid");
-        getStyle().set("border-width",  "1px");
+        getStyle().set("border-width", "1px");
     }
 }

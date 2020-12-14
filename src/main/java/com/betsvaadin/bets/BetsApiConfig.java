@@ -1,11 +1,10 @@
 package com.betsvaadin.bets;
 
 import com.vaadin.flow.spring.annotation.SpringComponent;
+
 import com.vaadin.flow.spring.annotation.UIScope;
-import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 @UIScope
 @Getter

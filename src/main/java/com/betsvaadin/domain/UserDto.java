@@ -30,6 +30,6 @@ public class UserDto {
         this.password = password;
         role = Role.USER;
         created = LocalDate.now();
-        balance = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        balance = new BigDecimal("0.00").setScale(2, RoundingMode.HALF_UP);
     }
 }

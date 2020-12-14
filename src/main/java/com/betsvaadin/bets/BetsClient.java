@@ -1,7 +1,5 @@
 package com.betsvaadin.bets;
 
-
-
 import com.betsvaadin.domain.*;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.UIScope;
@@ -32,65 +30,62 @@ public class BetsClient {
         this.betsApiConfig = betsApiConfig;
     }
 
-    public List<BetProspectDto> getCurrentBetProspectsFrom(String sportKey){
+    public List<BetProspectDto> getCurrentBetProspectsFrom(String sportKey) {
         URI url = createUriForGetOddsProspects(sportKey);
 
-        try{
+        try {
             BetProspectDtoList prospectsResponse = restTemplate.getForObject(url, BetProspectDtoList.class);
             return ofNullable(prospectsResponse.getList()).orElse(new ArrayList<>());
-        }catch(RestClientException e){
+        } catch (RestClientException e) {
             LOGGER.error(e.getMessage(), e);
             return new ArrayList<>();
         }
     }
 
-    public SignUpFeedback signUserUp(UserDto user){
-        URI url = createUriForSignUserUp();
-
-        try{
-            SignUpFeedback signUpFeedback = restTemplate.postForObject(url, user, SignUpFeedback.class);
-            return ofNullable(signUpFeedback).orElse(new SignUpFeedback(null, "Server communication problem (null response)"));
-        }catch(RestClientException e){
-            LOGGER.error(e.getMessage(), e);
-            return  new SignUpFeedback(null, "Server communication problem");
-        }
-    }
-
-    public LogInFeedback logUserIn(String login, String password){
-        URI url = createUriForLogUserIn(login, password);
-
-        try{
-            LogInFeedback logInFeedback = restTemplate.getForObject(url, LogInFeedback.class);
-            return ofNullable(logInFeedback).orElse(new LogInFeedback(null, "Server communication problem (null response)"));
-        }catch(RestClientException e){
-            LOGGER.error(e.getMessage(), e);
-            return new LogInFeedback(null, "Server communication problem");
-        }
-    }
-
-    public void updateUser (UserDto user){
-        URI url = createUriForSignUserUp();
-            restTemplate.put(url, user);
-    }
-
-    public UserDto getUserById(Long userId){
-        URI url = createUriForGetUserById(userId);
-
-        try{
-            UserDto user = restTemplate.getForObject(url, UserDto.class);
-            return user;
-        }catch(RestClientException e){
-            LOGGER.error(e.getMessage(), e);
-            return  null;
-        }
-    }
-
-    private URI createUriForGetOddsProspects(String sportKey){
+    private URI createUriForGetOddsProspects(String sportKey) {
         URI url = UriComponentsBuilder.fromHttpUrl(betsApiConfig.getBetsApiEndpoint() +
                 "/betprospects")
                 .queryParam("sportKey", sportKey)
                 .build().encode().toUri();
         return url;
+    }
+
+    public SignUpFeedback signUserUp(UserDto user) {
+        URI url = createUriForSignUserUp();
+
+        try {
+            SignUpFeedback signUpFeedback = restTemplate.postForObject(url, user, SignUpFeedback.class);
+            return ofNullable(signUpFeedback).orElse(new SignUpFeedback(null, "Server communication problem (null response)"));
+        } catch (RestClientException e) {
+            LOGGER.error(e.getMessage(), e);
+            return new SignUpFeedback(null, "Server communication problem");
+        }
+    }
+
+    public LogInFeedback logUserIn(String login, String password) {
+        URI url = createUriForLogUserIn(login, password);
+
+        try {
+            LogInFeedback logInFeedback = restTemplate.getForObject(url, LogInFeedback.class);
+            return ofNullable(logInFeedback).orElse(new LogInFeedback(null, "Server communication problem (null response)"));
+        } catch (RestClientException e) {
+            LOGGER.error(e.getMessage(), e);
+            return new LogInFeedback(null, "Server communication problem");
+        }
+    }
+
+    private URI createUriForLogUserIn(String login, String password) {
+        URI url = UriComponentsBuilder.fromHttpUrl(betsApiConfig.getBetsApiEndpoint() +
+                "/users")
+                .queryParam("login", login)
+                .queryParam("password", password)
+                .build().encode().toUri();
+        return url;
+    }
+
+    public void updateUser(UserDto user) {
+        URI url = createUriForSignUserUp();
+        restTemplate.put(url, user);
     }
 
     private URI createUriForSignUserUp() {
@@ -100,18 +95,78 @@ public class BetsClient {
         return url;
     }
 
-    private URI createUriForGetUserById(Long userId){
+    public UserDto getUserById(Long userId) {
+        URI url = createUriForGetUserById(userId);
+
+        try {
+            UserDto user = restTemplate.getForObject(url, UserDto.class);
+            return user;
+        } catch (RestClientException e) {
+            LOGGER.error(e.getMessage(), e);
+            return null;
+        }
+    }
+
+    private URI createUriForGetUserById(Long userId) {
         URI url = UriComponentsBuilder.fromHttpUrl(betsApiConfig.getBetsApiEndpoint() +
-                "/users/" + userId )
+                "/users/" + userId)
                 .build().encode().toUri();
         return url;
     }
 
-    private URI createUriForLogUserIn(String login, String password) {
+    public void addBet(BetDto bet) {
+
+        URI url = createUriForAddBet();
+
+        try {
+            restTemplate.postForObject(url, bet, Boolean.class);
+        } catch (RestClientException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    private URI createUriForAddBet() {
         URI url = UriComponentsBuilder.fromHttpUrl(betsApiConfig.getBetsApiEndpoint() +
-                "/users")
-                .queryParam("login", login)
-                .queryParam("password", password)
+                "/bets")
+                .build().encode().toUri();
+        return url;
+    }
+
+    public List<BetDto> getAllBets() {
+        URI url = createUriForGetAllBets();
+
+        try {
+            BetDtoList betsResponse = restTemplate.getForObject(url, BetDtoList.class);
+            return ofNullable(betsResponse.getList()).orElse(new ArrayList<>());
+        } catch (RestClientException e) {
+            LOGGER.error(e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    private URI createUriForGetAllBets() {
+        URI url = UriComponentsBuilder.fromHttpUrl(betsApiConfig.getBetsApiEndpoint() +
+                "/bets")
+                .build().encode().toUri();
+        return url;
+    }
+
+    public List<BetDto> getBetsOfUser(Long userId, Boolean pending) {
+        URI url = createUriForGetBetsOfUser(userId, pending);
+        try {
+            BetDtoList betsResponse = restTemplate.getForObject(url, BetDtoList.class);
+            return ofNullable(betsResponse.getList()).orElse(new ArrayList<>());
+        } catch (RestClientException e) {
+            LOGGER.error(e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    private URI createUriForGetBetsOfUser(Long userId, Boolean onlyPending) {
+        URI url = UriComponentsBuilder.fromHttpUrl(betsApiConfig.getBetsApiEndpoint() +
+                "/userbets")
+                .queryParam("userId", userId)
+                .queryParam("onlyPending", onlyPending)
                 .build().encode().toUri();
         return url;
     }

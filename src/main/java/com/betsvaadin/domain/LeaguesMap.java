@@ -1,11 +1,13 @@
 package com.betsvaadin.domain;
 
 import com.vaadin.flow.spring.annotation.SpringComponent;
+import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.Getter;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@UIScope
 @SpringComponent
 @Getter
 public class LeaguesMap {

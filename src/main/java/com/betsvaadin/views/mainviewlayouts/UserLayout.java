@@ -1,6 +1,7 @@
-package com.betsvaadin.domain;
+package com.betsvaadin.views.mainviewlayouts;
 
-import com.betsvaadin.MainView;
+import com.betsvaadin.domain.UserDto;
+import com.betsvaadin.views.MainView;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Label;
@@ -12,7 +13,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
-import com.vaadin.flow.theme.Theme;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -26,7 +26,6 @@ public class UserLayout extends HorizontalLayout {
         userField.setValue(mainView.getUser().getUsername());
         userField.setReadOnly(true);
         userField.getStyle().set("font-size", "22px");
-
 
         BigDecimalField balanceField = new BigDecimalField("Account balance");
         balanceField.setValue(mainView.getUser().getBalance());
@@ -44,11 +43,11 @@ public class UserLayout extends HorizontalLayout {
             payInAmount.setValue(BigDecimal.ZERO);
             Button submit = new Button("Submit");
             submit.addClickListener(event1 -> {
-                if (payInAmount.getValue().compareTo(BigDecimal.ZERO) <= 0){
+                if (payInAmount.getValue() == null || payInAmount.getValue().compareTo(BigDecimal.ZERO) <= 0) {
                     Notification.show("Please put number greater than 0");
                 } else {
                     UserDto user = mainView.getBetsFacade().getUserById(mainView.getUser().getId());
-                    if (user != null){
+                    if (user != null) {
                         BigDecimal newBalance = user.getBalance().add(payInAmount.getValue()).setScale(2, RoundingMode.HALF_UP);
                         user.setBalance(newBalance);
                         mainView.getBetsFacade().updateUser(user);
@@ -61,7 +60,7 @@ public class UserLayout extends HorizontalLayout {
 
             Button cancel = new Button("Cancel");
             cancel.addClickListener(event2 -> {
-               payInDialog.close();
+                payInDialog.close();
             });
             VerticalLayout dialogLayout = new VerticalLayout();
             dialogLayout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
@@ -79,17 +78,19 @@ public class UserLayout extends HorizontalLayout {
             payOutAmount.setValue(BigDecimal.ZERO);
             Button submitPayOut = new Button("Submit");
             submitPayOut.addClickListener(event4 -> {
-                if (payOutAmount.getValue().compareTo(BigDecimal.ZERO) <= 0
-                        || payOutAmount.getValue().compareTo(mainView.getUser().getBalance()) > 0){
-                    Notification.show("Please put amount greater than 0 but not greater than your current balance");
+                if (payOutAmount.getValue() == null || payOutAmount.getValue().compareTo(BigDecimal.ZERO) <= 0
+                        || payOutAmount.getValue().compareTo(mainView.getUser().getBalance()) > 0) {
+                    Notification.show("Please put amount greater than 0 but not exceeding your current balance");
                 } else {
-                    UserDto user = mainView.getUser();
-                    BigDecimal newBalance = user.getBalance().subtract(payOutAmount.getValue()).setScale(2, RoundingMode.HALF_UP);
-                    user.setBalance(newBalance);
-                    mainView.getBetsFacade().updateUser(user);
-                    mainView.setUser(user);
-                    mainView.updateUserBar();
-                    payOutDialog.close();
+                    UserDto user = mainView.getBetsFacade().getUserById(mainView.getUser().getId());
+                    if (user != null) {
+                        BigDecimal newBalance = user.getBalance().subtract(payOutAmount.getValue()).setScale(2, RoundingMode.HALF_UP);
+                        user.setBalance(newBalance);
+                        mainView.getBetsFacade().updateUser(user);
+                        mainView.setUser(user);
+                        mainView.updateUserBar();
+                        payOutDialog.close();
+                    }
                 }
             });
 
@@ -104,11 +105,17 @@ public class UserLayout extends HorizontalLayout {
             payOutDialog.open();
         });
 
-        add(userField);
-        add(balanceField);
-        add(payIn);
-        add(payOut);
+        Label invisible = new Label("mm");
+        invisible.getStyle().set("color", "white");
 
+        Button myBetsButton = new Button("Go to My Bets");
+        myBetsButton.addClickListener(event6 -> {
+            myBetsButton.getUI().ifPresent(ui -> {
+                ui.navigate("bets");
+            });
+        });
+
+        add(userField, balanceField, payIn, payOut, invisible, myBetsButton);
         setDefaultVerticalComponentAlignment(Alignment.END);
     }
 }

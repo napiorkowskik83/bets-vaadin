@@ -1,15 +1,17 @@
-package com.betsvaadin;
+package com.betsvaadin.views;
 
 import com.betsvaadin.bets.facade.BetsFacade;
-import com.betsvaadin.domain.LogInFeedback;
 import com.betsvaadin.domain.SignUpFeedback;
 import com.betsvaadin.domain.UserDto;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.SpringComponent;
@@ -22,11 +24,10 @@ import java.time.temporal.ChronoUnit;
 
 
 @UIScope
-@PreserveOnRefresh
+//@PreserveOnRefresh
 @SpringComponent
 @Route(value = "signup")
 public class SignUpView extends VerticalLayout {
-
 
     @Autowired
     public SignUpView(MainView mainView, BetsFacade betsFacade) {
@@ -45,35 +46,42 @@ public class SignUpView extends VerticalLayout {
             String emailInput = email.getValue();
             String passwordInput = password.getValue();
             String repeatPasswordInput = repeatPassword.getValue();
-            if (years.between(birthDate.getValue(), LocalDate.now()) < 18) {
+            if (birthDate.getValue() == null || years.between(birthDate.getValue(), LocalDate.now()) < 18) {
                 Notification.show("You must be at least 18 years old to sing up!");
-            }else if (usernameInput.length() < 3) {
+            } else if (usernameInput == null || usernameInput.length() < 3) {
                 Notification.show("Please enter at least 3 character long user login!");
                 // validate e-mail!!!!!!!
-            } else if (emailInput.length() < 5){
+            } else if (emailInput == null || emailInput.length() < 5) {
                 Notification.show("Please enter correct e-mail address!");
-            }else if (passwordInput.length() < 5) {
+            } else if (passwordInput == null || passwordInput.length() < 5) {
                 Notification.show("Please enter at least 5 character long password!");
-            }else if (!passwordInput.equals(repeatPasswordInput)) {
+            } else if (!passwordInput.equals(repeatPasswordInput)) {
                 Notification.show("Password and repeated password need to be the same!");
-            }else {
+            } else {
                 UserDto user = new UserDto(usernameInput, emailInput, passwordInput);
                 SignUpFeedback signUpFeedback = betsFacade.signUserUp(user);
-                if (signUpFeedback.getUser() != null){
+                if (signUpFeedback.getUser() != null) {
+                    username.setValue("");
+                    email.setValue("");
+                    password.setValue("");
+                    repeatPassword.setValue("");
+                    birthDate.setValue(LocalDate.now());
+                    mainView.cleanUp();
                     mainView.setUser(signUpFeedback.getUser());
-                    getUI().ifPresent(ui ->
-                            ui.navigate(""));
-                }else{
+                    signInButton.getUI().ifPresent(ui -> {
+                        ui.navigate("");
+                    });
+                } else {
                     Notification.show(signUpFeedback.getMessage());
                 }
-
             }
         });
 
         Button login = new Button("Log In");
         login.addClickListener(event -> {
-            getUI().ifPresent(ui ->
-                    ui.navigate("login"));
+            login.getUI().ifPresent(ui -> {
+                ui.navigate("login");
+            });
         });
 
         setHorizontalComponentAlignment(Alignment.CENTER, username);
@@ -85,5 +93,7 @@ public class SignUpView extends VerticalLayout {
         setHorizontalComponentAlignment(Alignment.CENTER, login);
 
         add(username, email, password, repeatPassword, birthDate, signInButton, login);
+
+        System.out.println("From Sign Up: " + mainView);
     }
 }
