@@ -6,7 +6,6 @@ import com.betsvaadin.domain.*;
 import com.betsvaadin.views.mainviewlayouts.BetProspectDescription;
 import com.betsvaadin.views.mainviewlayouts.BetProspectLayout;
 import com.betsvaadin.views.mainviewlayouts.UserLayout;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.notification.Notification;
@@ -21,8 +20,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Getter
@@ -35,7 +34,8 @@ import java.util.stream.Collectors;
 public class MainView extends VerticalLayout implements BeforeEnterObserver, RouterLayout {
 
     private UserDto user = null;
-    private CheckboxGroup selectLeague = new CheckboxGroup();
+    private Button adminButton = new Button("Go to Admin page");
+    private CheckboxGroup<String> selectLeague = new CheckboxGroup<>();
     private HorizontalLayout userBar = new HorizontalLayout();
     private HorizontalLayout betProspectsBar = new HorizontalLayout();
     private HorizontalLayout mainBetsLayout = new HorizontalLayout();
@@ -50,48 +50,54 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver, Rou
         this.betsFacade = betsFacade;
         this.leaguesMap = leaguesMap;
 
-
         Button getBetProspects = new Button("Get available bet prospects");
-        getBetProspects.addClickListener(event -> {
-            updateBetProspectsLayout();
-        });
+        getBetProspects.addClickListener(event -> updateBetProspectsLayout());
 
         Button logOut = new Button("Log Out");
         logOut.addClickListener(event -> {
             cleanUp();
-            UI.getCurrent().navigate(LoginView.class);
+            getUI().ifPresent(ui -> ui.navigate(LoginView.class));
         });
 
         setHorizontalComponentAlignment(Alignment.END, logOut);
 
-        selectLeague.setItems(leaguesMap.getLeagues().entrySet().stream()
-                .map(e -> e.getKey()).collect(Collectors.toList()));
+        adminButton.addClickListener(event -> getUI().ifPresent(ui -> ui.navigate("admin")));
 
+        setHorizontalComponentAlignment(Alignment.END, adminButton);
+
+        Button accountSettingsButton = new Button("Account settings");
+        accountSettingsButton.addClickListener(event6 -> getUI().ifPresent(ui -> ui.navigate("user")));
+
+        setHorizontalComponentAlignment(Alignment.END, accountSettingsButton);
+
+        selectLeague.setItems(new ArrayList<>(leaguesMap.getLeagues().keySet()));
 
         userBar.setDefaultVerticalComponentAlignment(Alignment.END);
 
-        add(logOut);
-        add(userBar);
 
         betProspectsBar.setWidthFull();
         betProspectsBar.add(getBetProspects, selectLeague);
         description.setVisible(false);
-
-        add(betProspectsBar, description);
-
         mainBetsLayout.add(betProspectsLayout, betsLayout);
-        add(mainBetsLayout);
+
+        add(logOut, adminButton, accountSettingsButton, userBar, betProspectsBar, description, mainBetsLayout);
+        getStyle().set("padding-left", "5em");
+        getStyle().set("padding-right", "5em");
     }
 
     public void updateBetProspectsLayout() {
         betProspectsLayout.removeAll();
         if (selectLeague.getSelectedItems().size() > 0) {
-            List<BetProspectDto> list = betsFacade.getBetProspects(selectLeague.getSelectedItems());
+            description.setVisible(true);
+            BetProspectsRequestDto prospectsRequest = new BetProspectsRequestDto(user.getId(),
+                    new ArrayList<>(selectLeague.getSelectedItems()));
+            List<BetProspectDto> list = betsFacade.getBetProspects(prospectsRequest);
             for (BetProspectDto prospect : list) {
                 betProspectsLayout.add(new BetProspectLayout(this, prospect));
             }
         } else {
             Notification.show("Select at least 1 league to see it's bet prospects");
+            description.setVisible(false);
         }
     }
 
@@ -109,6 +115,7 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver, Rou
         } else {
             user = betsFacade.getUserById(user.getId());
             updateUserBar();
+            adminButton.setVisible(Role.ADMIN.equals(user.getRole()));
         }
     }
 

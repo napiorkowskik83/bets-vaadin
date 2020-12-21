@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Route(value = "login")
 public class LoginView extends VerticalLayout implements BeforeEnterObserver {
 
-    private MainView mainView;
+    private final MainView mainView;
 
     private final TextField login = new TextField("Login");
     private final PasswordField password = new PasswordField("Password");
@@ -48,10 +48,8 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         });
 
         Button signUpButton = new Button("Sign Up");
-        signUpButton.addClickListener(event -> {
-            signUpButton.getUI().ifPresent(ui ->
-                    ui.navigate("signup"));
-        });
+        signUpButton.addClickListener(event -> signUpButton.getUI().ifPresent(ui ->
+                ui.navigate("signup")));
 
         setHorizontalComponentAlignment(Alignment.CENTER, login);
         setHorizontalComponentAlignment(Alignment.CENTER, password);

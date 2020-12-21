@@ -1,22 +1,26 @@
 package com.betsvaadin.views;
 
 import com.betsvaadin.domain.BetDto;
+import com.betsvaadin.domain.UserDto;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
-import com.vaadin.flow.router.PreserveOnRefresh;
-import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.*;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.UIScope;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 
@@ -24,39 +28,44 @@ import java.util.List;
 @PreserveOnRefresh
 @SpringComponent
 @Route(value = "bets")
-public class UserBetsView extends VerticalLayout implements BeforeEnterObserver {
+public class UserBetsView extends VerticalLayout implements BeforeEnterObserver{
+
+    private final MainView mainView;
+    private final TextField userName = new TextField("User");
+    private List<BetDto> bets;
+    private final Grid<BetDto> grid = new Grid<>();
+    private final Checkbox onlyPending = new Checkbox();
+    private final ChronoUnit seconds = ChronoUnit.SECONDS;
+
 
     @Autowired
-    private MainView mainView;
-
-    private TextField userName = new TextField("User");
-    private List<BetDto> bets;
-    private Grid<BetDto> grid = new Grid<>();
-
-    public UserBetsView() {
+    public UserBetsView(MainView mainView) {
+        this.mainView = mainView;
 
         Button logOut = new Button("Log Out");
         logOut.addClickListener(event -> {
             mainView.setUser(null);
             mainView.getBetsLayout().removeAll();
             mainView.getBetsLayout().removeAll();
-            logOut.getUI().ifPresent(ui -> {
-                ui.navigate("login");
-            });
+            logOut.getUI().ifPresent(ui -> ui.navigate("login"));
         });
 
         setHorizontalComponentAlignment(FlexComponent.Alignment.END, logOut);
 
+        Button mainPageButton = new Button("Go to Main Page");
+        mainPageButton.addClickListener(event6 -> mainPageButton.getUI().ifPresent(ui -> ui.navigate("")));
+
+        setHorizontalComponentAlignment(FlexComponent.Alignment.END, mainPageButton);
+
         HorizontalLayout userBar = new HorizontalLayout();
-        userBar.getStyle().set("border-bottom-style", "solid");
-        userBar.getStyle().set("border-width", "1px");
-        userBar.getStyle().set("padding-bottom", "20px");
+//        userBar.getStyle().set("border-bottom-style", "solid");
+//        userBar.getStyle().set("border-width", "1px");
+//        userBar.getStyle().set("padding-bottom", "15px");
 
 
         userName.setReadOnly(true);
         userName.getStyle().set("font-size", "22px");
 
-        Checkbox onlyPending = new Checkbox();
         onlyPending.setLabel("Show only pending bets");
         onlyPending.addValueChangeListener(event -> {
             bets = mainView.getBetsFacade().getBetsOfUser(mainView.getUser().getId(),
@@ -65,15 +74,7 @@ public class UserBetsView extends VerticalLayout implements BeforeEnterObserver 
         });
 
 
-        Button mainPageButton = new Button("Go to Main Page");
-        mainPageButton.addClickListener(event6 -> {
-            mainPageButton.getUI().ifPresent(ui -> {
-                ui.navigate("");
-            });
-
-        });
-
-        userBar.add(userName, onlyPending, mainPageButton);
+        userBar.add(userName, onlyPending);
         userBar.setDefaultVerticalComponentAlignment(Alignment.END);
 
 
@@ -84,11 +85,11 @@ public class UserBetsView extends VerticalLayout implements BeforeEnterObserver 
         grid.addColumn(betDto -> betDto.getBetProspect().getCommence_time().toLocalDateTime()
                 .plusHours(1).toString().replace('T', ' '))
                 .setHeader("Match start");
-        grid.addColumn(betDto -> betDto.getTippedWinner())
+        grid.addColumn(BetDto::getTippedWinner)
                 .setHeader("Bet on");
-        grid.addColumn(betDto -> betDto.getOdd())
+        grid.addColumn(BetDto::getOdd)
                 .setHeader("Odd");
-        grid.addColumn(betDto -> betDto.getWinner())
+        grid.addColumn(BetDto::getWinner)
                 .setHeader("Actual winner");
         grid.addColumn(betDto -> betDto.getStake() + " €")
                 .setHeader("Stake");
@@ -103,15 +104,73 @@ public class UserBetsView extends VerticalLayout implements BeforeEnterObserver 
         grid.getColumns()
                 .forEach(column -> column.setAutoWidth(true));
 
-        add(logOut, userBar, grid);
+        grid.asSingleSelect().addValueChangeListener(event -> {
+            BetDto bet = grid.asSingleSelect().getValue();
+            if (bet != null){
+                if (seconds.between(bet.getBetProspect().getCommence_time(), ZonedDateTime.now()) < 0.){
+                    Dialog deleteBetDialog = new Dialog();
+                    Label deleteBetLabel = new Label("Do you want to delete bet?");
+                    Button confirmButton = new Button("Delete");
+                    confirmButton.addClickListener(event1 -> {
+                        if (seconds.between(bet.getBetProspect().getCommence_time(), ZonedDateTime.now()) < 0.){
+                            UserDto user = mainView.getBetsFacade().getUserById(bet.getUser().getId());
+                            if(user != null){
+                                BigDecimal newBalance = user.getBalance().add(bet.getStake())
+                                        .setScale(2, RoundingMode.HALF_UP);
+                                user.setBalance(newBalance);
+                                mainView.getBetsFacade().updateUser(user);
+                                mainView.setUser(user);
+                                mainView.updateUserBar();
+                                mainView.getBetsFacade().deleteBet(bet.getId());
+                                bets = mainView.getBetsFacade().getBetsOfUser(mainView.getUser().getId(),
+                                        onlyPending.getValue());
+                                grid.setItems(bets);
+                                Notification.show("Bet has been successfully deleted\n" +
+                                        "Stake from this bets was added to your balance.");
+                                grid.deselectAll();
+                                deleteBetDialog.close();
+                            }else{
+                                Notification.show("Too late, you can not delete bet after match starts!");
+                                deleteBetDialog.close();
+                                grid.deselectAll();
+                            }
+                        }
+                    });
+                    Button cancelButton = new Button("Cancel");
+                    cancelButton.addClickListener(event2 -> {
+                        deleteBetDialog.close();
+                        grid.deselectAll();
+                    });
+
+                    VerticalLayout mainDialogLayout = new VerticalLayout();
+                    mainDialogLayout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
+                    HorizontalLayout buttonsLayout = new HorizontalLayout();
+                    buttonsLayout.add(confirmButton, cancelButton);
+                    mainDialogLayout.add(deleteBetLabel, buttonsLayout);
+                    deleteBetDialog.add(mainDialogLayout);
+                    deleteBetDialog.open();
+                } else {
+                    Notification.show("By clicking on bet you can try to delete it. \n" +
+                            "Bet can be deleted only before match start!");
+                    grid.deselectAll();
+                }
+            }
+        });
+        grid.getStyle().set("padding-left", "10em");
+        add(logOut, mainPageButton, userBar, grid);
+        getStyle().set("padding-left", "5em");
+        getStyle().set("padding-right", "5em");
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         if (mainView.getUser() != null) {
             userName.setValue(mainView.getUser().getUsername());
-            bets = mainView.getBetsFacade().getBetsOfUser(mainView.getUser().getId(), false);
+            bets = mainView.getBetsFacade().getBetsOfUser(mainView.getUser().getId(),
+                    onlyPending.getValue());
             grid.setItems(bets);
+            Notification.show("By clicking on bet you can try to delete it. \n" +
+                    "Bet can be deleted only before match start!");
         } else {
             mainView.cleanUp();
             event.forwardTo(LoginView.class);

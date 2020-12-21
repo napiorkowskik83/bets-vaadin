@@ -11,7 +11,7 @@ import java.util.Map;
 @SpringComponent
 @Getter
 public class LeaguesMap {
-    private Map<String, String> leagues;
+    private final Map<String, String> leagues;
 
     public LeaguesMap() {
         leagues = new HashMap<>();

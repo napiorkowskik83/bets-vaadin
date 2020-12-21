@@ -7,27 +7,27 @@ public class BetProspectDescription extends HorizontalLayout {
 
     public BetProspectDescription() {
 
-        Label invisible1 = new Label("mm");
-        invisible1.getStyle().set("color", "white");
+        Label empty1 = new Label();
+        empty1.setWidth("2em");
         Label startTimeLabel = new Label("Match start");
         startTimeLabel.getStyle().set("font-weight", "bold");
-        Label invisible2 = new Label("mmmmmmmm");
-        invisible2.getStyle().set("color", "white");
+        Label empty2 = new Label();
+        empty2.setWidth("5.5em");
         Label odds = new Label("Odds: ");
-        Label invisible3 = new Label("ii");
-        invisible3.getStyle().set("color", "white");
+        Label empty3 = new Label();
+        empty3.setWidth("1.5em");
         Label homeTeam = new Label("HOME TEAM ");
         homeTeam.getStyle().set("font-weight", "bold");
-        Label invisible4 = new Label("i");
-        invisible4.getStyle().set("color", "white");
+        Label empty4 = new Label();
+        empty4.setWidth("0.25em");
         Label draw = new Label(" DRAW ");
         draw.getStyle().set("font-weight", "bold");
-        Label invisible5 = new Label("i");
-        invisible5.getStyle().set("color", "white");
+        Label empty5 = new Label();
+        empty5.setWidth("0.25em");
         Label awayTeam = new Label(" AWAY TEAM");
         awayTeam.getStyle().set("font-weight", "bold");
 
-        add(invisible1, startTimeLabel, invisible2, odds, invisible3, homeTeam, invisible4, draw, invisible5, awayTeam);
+        add(empty1, startTimeLabel, empty2, odds, empty3, homeTeam, empty4, draw, empty5, awayTeam);
 
         getStyle().set("border-top-style", "solid");
         getStyle().set("border-width", "1px");

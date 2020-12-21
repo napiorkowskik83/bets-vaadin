@@ -3,20 +3,15 @@ package com.betsvaadin.views;
 import com.betsvaadin.bets.facade.BetsFacade;
 import com.betsvaadin.domain.SignUpFeedback;
 import com.betsvaadin.domain.UserDto;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
-import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.UIScope;
-import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
@@ -24,7 +19,6 @@ import java.time.temporal.ChronoUnit;
 
 
 @UIScope
-//@PreserveOnRefresh
 @SpringComponent
 @Route(value = "signup")
 public class SignUpView extends VerticalLayout {
@@ -68,9 +62,7 @@ public class SignUpView extends VerticalLayout {
                     birthDate.setValue(LocalDate.now());
                     mainView.cleanUp();
                     mainView.setUser(signUpFeedback.getUser());
-                    signInButton.getUI().ifPresent(ui -> {
-                        ui.navigate("");
-                    });
+                    signInButton.getUI().ifPresent(ui -> ui.navigate(""));
                 } else {
                     Notification.show(signUpFeedback.getMessage());
                 }
@@ -78,11 +70,7 @@ public class SignUpView extends VerticalLayout {
         });
 
         Button login = new Button("Log In");
-        login.addClickListener(event -> {
-            login.getUI().ifPresent(ui -> {
-                ui.navigate("login");
-            });
-        });
+        login.addClickListener(event -> login.getUI().ifPresent(ui -> ui.navigate("login")));
 
         setHorizontalComponentAlignment(Alignment.CENTER, username);
         setHorizontalComponentAlignment(Alignment.CENTER, email);

@@ -1,11 +1,9 @@
 package com.betsvaadin.views.mainviewlayouts;
 
-
 import com.betsvaadin.domain.BetDto;
 import com.betsvaadin.domain.BetProspectDto;
 import com.betsvaadin.domain.Winner;
 import com.betsvaadin.views.MainView;
-import com.betsvaadin.views.mainviewlayouts.BetLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.notification.Notification;
@@ -33,10 +31,10 @@ public class BetProspectLayout extends HorizontalLayout {
 
         Button homeTeamOdd = new Button(prospect.getH2h().get(0).toString());
         homeTeamOdd.addClickListener(event -> {
-
             if (seconds.between(prospect.getCommence_time(), ZonedDateTime.now()) < 0) {
                 BetDto bet = new BetDto(mainView.getUser(), prospect, Winner.HOME_TEAM);
                 mainView.getBetsLayout().add(new BetLayout(mainView, bet));
+                Notification.show("Please enter stake to submit the bet");
             } else {
                 Notification.show("Too late, you can not make a bet after match start! \n" +
                         "Odd prospect list has been updated.");
@@ -49,6 +47,7 @@ public class BetProspectLayout extends HorizontalLayout {
             if (seconds.between(prospect.getCommence_time(), ZonedDateTime.now()) < 0) {
                 BetDto bet = new BetDto(mainView.getUser(), prospect, Winner.DRAW);
                 mainView.getBetsLayout().add(new BetLayout(mainView, bet));
+                Notification.show("Please enter stake to submit the bet");
             } else {
                 Notification.show("Too late, you can not make a bet after match start! \n" +
                         "Odd prospect list has been updated.");
@@ -61,6 +60,7 @@ public class BetProspectLayout extends HorizontalLayout {
             if (seconds.between(prospect.getCommence_time(), ZonedDateTime.now()) < 0) {
                 BetDto bet = new BetDto(mainView.getUser(), prospect, Winner.AWAY_TEAM);
                 mainView.getBetsLayout().add(new BetLayout(mainView, bet));
+                Notification.show("Please enter stake to submit the bet");
             } else {
                 Notification.show("Too late, you can not make a bet after match start! \n" +
                         "Odd prospect list has been updated.");

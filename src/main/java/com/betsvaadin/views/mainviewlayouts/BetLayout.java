@@ -81,6 +81,7 @@ public class BetLayout extends VerticalLayout {
                 possibleWinField.setValue(odd.multiply(stakeField.getValue()).setScale(2, RoundingMode.HALF_UP));
             }
         });
+        stakeField.focus();
 
         stakeLine.add(stakeField, oddField, possibleWinField);
 
@@ -106,7 +107,8 @@ public class BetLayout extends VerticalLayout {
                 mainView.updateUserBar();
                 betDto.setUser(user);
                 mainView.getBetsFacade().addBet(betDto);
-                Notification.show("Bet was successfully registered, you can see it in My Bets");
+                Notification.show("Bet was successfully registered, you can see it in My Bets.\n" +
+                        "!!!Bet can be deleted only before match start!!!");
                 mainView.getBetsLayout().remove(this);
             }
         });
@@ -120,5 +122,6 @@ public class BetLayout extends VerticalLayout {
         add(teamsLine, startAndBetOnLine, stakeLine, buttonLine);
         getStyle().set("border-style", "solid");
         getStyle().set("border-width", "1px");
+        stakeField.focus();
     }
 }
