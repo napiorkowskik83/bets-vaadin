@@ -106,6 +106,8 @@ public class MainView extends VerticalLayout implements BeforeEnterObserver, Rou
         userBar.removeAll();
         betProspectsLayout.removeAll();
         betsLayout.removeAll();
+        selectLeague.deselectAll();
+        description.setVisible(false);
     }
 
     @Override
