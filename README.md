@@ -1,5 +1,7 @@
 # BestBetsApp - frontend
 
+[Link to backend app](https://github.com/napiorkowskik83/bets)
+
 Application is using local server port 8081.
 It starts by running main method in BetsVaadinApplication class.
 
