@@ -107,12 +107,12 @@ public class UserBetsView extends VerticalLayout implements BeforeEnterObserver{
         grid.asSingleSelect().addValueChangeListener(event -> {
             BetDto bet = grid.asSingleSelect().getValue();
             if (bet != null){
-                if (seconds.between(bet.getBetProspect().getCommence_time(), ZonedDateTime.now()) < 0.){
+                if (bet.getBetProspect().getCommence_time().isBefore(ZonedDateTime.now())){
                     Dialog deleteBetDialog = new Dialog();
                     Label deleteBetLabel = new Label("Do you want to delete bet?");
                     Button confirmButton = new Button("Delete");
                     confirmButton.addClickListener(event1 -> {
-                        if (seconds.between(bet.getBetProspect().getCommence_time(), ZonedDateTime.now()) < 0.){
+                        if (bet.getBetProspect().getCommence_time().isBefore(ZonedDateTime.now())){
                             UserDto user = mainView.getBetsFacade().getUserById(bet.getUser().getId());
                             if(user != null){
                                 BigDecimal newBalance = user.getBalance().add(bet.getStake())
@@ -129,11 +129,11 @@ public class UserBetsView extends VerticalLayout implements BeforeEnterObserver{
                                         "Stake from this bets was added to your balance.");
                                 grid.deselectAll();
                                 deleteBetDialog.close();
-                            }else{
-                                Notification.show("Too late, you can not delete bet after match starts!");
-                                deleteBetDialog.close();
-                                grid.deselectAll();
                             }
+                        }else{
+                            Notification.show("Too late, you can not delete bet after match starts!");
+                            deleteBetDialog.close();
+                            grid.deselectAll();
                         }
                     });
                     Button cancelButton = new Button("Cancel");
